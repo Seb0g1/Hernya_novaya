@@ -10,8 +10,9 @@ export function MediaUpload() {
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const form = e.currentTarget;
     setMsg(null);
-    const fd = new FormData(e.currentTarget);
+    const fd = new FormData(form);
     setLoading(true);
     const res = await fetch("/api/media", { method: "POST", body: fd });
     setLoading(false);
@@ -20,7 +21,7 @@ export function MediaUpload() {
       setMsg(j.error ?? `Ошибка ${res.status}`);
       return;
     }
-    e.currentTarget.reset();
+    form.reset();
     router.refresh();
     setMsg("Файл загружен.");
   }

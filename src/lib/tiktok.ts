@@ -16,10 +16,10 @@ const TIKTOK_AUTH = "https://www.tiktok.com/v2/auth/authorize/";
 const TOKEN_URL = "https://open.tiktokapis.com/v2/oauth/token/";
 const API_BASE = "https://open.tiktokapis.com";
 
+/** Совпадайте с разделом Scopes в портале (иначе ошибка «scope» при входе). */
 export const TIKTOK_SCOPES = [
   "user.info.basic",
-  "user.info.profile",
-  "video.publish",
+  "video.upload",
 ].join(",");
 
 export type TokenResponse = {

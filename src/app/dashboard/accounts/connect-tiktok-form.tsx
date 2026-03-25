@@ -27,11 +27,20 @@ export function ConnectTikTokForm() {
           useEnv ? {} : { clientKey: k, clientSecret: s },
         ),
         credentials: "same-origin",
+        cache: "no-store",
       });
-      const j = (await res.json().catch(() => ({}))) as {
-        url?: string;
-        error?: string;
-      };
+      const raw = await res.text();
+      let j: { url?: string; error?: string } = {};
+      try {
+        j = raw ? (JSON.parse(raw) as typeof j) : {};
+      } catch {
+        setError(
+          res.status === 500
+            ? "Сервер вернул не JSON. Проверьте логи PM2 и что выполнен git pull + npm run build."
+            : `Ответ сервера не JSON (${res.status}). Обновите страницу (Ctrl+F5).`,
+        );
+        return;
+      }
       if (res.ok && j.url) {
         window.location.href = j.url;
         return;
@@ -40,7 +49,13 @@ export function ConnectTikTokForm() {
         setError(j.error);
         return;
       }
-      setError(`Ошибка ${res.status || "сеть"}`);
+      if (res.status === 0 || !res.status) {
+        setError(
+          "Нет ответа (код 0). Обычно это старый кэш JS или сбой сети — сделайте жёсткое обновление (Ctrl+Shift+R) и убедитесь, что на сервере: git pull, npm run build, pm2 restart.",
+        );
+        return;
+      }
+      setError(`Ошибка ${res.status}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Сеть");
     } finally {

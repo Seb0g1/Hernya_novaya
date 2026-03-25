@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model TikTokAccount {
+  id               String        @id @default(cuid())
+  openId           String        @unique
+  displayName      String?
+  avatarUrl        String?
+  /** Свой TikTok app (client key); если null — используются TIKTOK_* из .env */
+  appClientKey     String?
+  /** Зашифрованный client secret своего приложения */
+  appClientSecret  String?
+  accessToken      String
+  refreshToken     String?
+  expiresAt        DateTime?
+  scope            String?
+  active           Boolean       @default(true)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  publishJobs      PublishJob[]
+}
+
+model YoutubeAccount {
+  id            String        @id @default(cuid())
+  channelId     String        @unique
+  channelTitle  String?
+  accessToken   String
+  refreshToken  String?
+  expiresAt     DateTime?
+  scope         String?
+  active        Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  publishJobs   PublishJob[]
+}
+
+model MediaAsset {
+  id         String       @id @default(cuid())
+  kind       MediaKind
+  storageKey String
+  publicUrl  String
+  mimeType   String?
+  sizeBytes  Int?
+  caption    String?
+  createdAt  DateTime     @default(now())
+  jobs       PublishJob[]
+}
+
+enum MediaKind {
+  VIDEO
+  PHOTO
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  DONE
+  FAILED
+}
+
+enum PublishPlatform {
+  TIKTOK
+  YOUTUBE
+}
+
+model PublishJob {
+  id                 String           @id @default(cuid())
+  platform           PublishPlatform
+  tiktokAccountId    String?
+  tiktokAccount      TikTokAccount?   @relation(fields: [tiktokAccountId], references: [id], onDelete: Cascade)
+  youtubeAccountId   String?
+  youtubeAccount     YoutubeAccount?  @relation(fields: [youtubeAccountId], references: [id], onDelete: Cascade)
+  mediaId            String
+  media              MediaAsset       @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  status             JobStatus        @default(PENDING)
+  attempts           Int              @default(0)
+  errorMessage       String?
+  tiktokPublishId    String?
+  youtubeVideoId     String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  startedAt          DateTime?
+  completedAt        DateTime?
+
+  @@index([status])
+  @@index([platform])
+  @@index([tiktokAccountId])
+  @@index([youtubeAccountId])
+}

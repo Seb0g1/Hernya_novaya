@@ -1,8 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f4f4f5;
+  --foreground: #18181b;
+  --surface: #ffffff;
+  --surface-muted: #fafafa;
+  --border: rgba(24, 24, 27, 0.08);
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+  --ring: rgba(99, 102, 241, 0.35);
 }
 
 @theme inline {
@@ -12,15 +18,28 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+details summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Subtle grain + gradient for dashboard depth */
+.dashboard-bg {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(
+      ellipse 120% 80% at 100% -20%,
+      rgba(99, 102, 241, 0.12),
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse 80% 60% at 0% 100%,
+      rgba(236, 72, 153, 0.06),
+      transparent 45%
+    );
 }

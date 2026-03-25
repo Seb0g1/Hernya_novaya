@@ -15,7 +15,13 @@ function accountsErrorRedirect(base: string, message: string) {
   );
 }
 
-async function startOAuthFlow(creds: TikTokAppCredentials | null) {
+/** JSON — для fetch из браузера (иначе redirect на TikTok даёт opaque-ответ и status 0). */
+type ResponseMode = "redirect" | "json";
+
+async function startOAuthFlow(
+  creds: TikTokAppCredentials | null,
+  mode: ResponseMode,
+) {
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -51,24 +57,32 @@ async function startOAuthFlow(creds: TikTokAppCredentials | null) {
 
   const useCreds = creds ?? getTikTokCredentialsFromEnv();
   if (!useCreds) {
-    return accountsErrorRedirect(
-      base,
-      "Нет ключей TikTok: задайте TIKTOK_CLIENT_KEY/SECRET в .env или укажите Client Key и Client Secret в форме ниже.",
-    );
+    const msg =
+      "Нет ключей TikTok: задайте TIKTOK_CLIENT_KEY/SECRET в .env или укажите Client Key и Client Secret в форме ниже.";
+    if (mode === "json") {
+      return NextResponse.json({ error: msg }, { status: 400 });
+    }
+    return accountsErrorRedirect(base, msg);
   }
 
   try {
     const url = buildAuthorizeUrl(state, redirectUri, creds ?? undefined);
+    if (mode === "json") {
+      return NextResponse.json({ url });
+    }
     return NextResponse.redirect(url);
   } catch (e) {
     const msg =
       e instanceof Error ? e.message : "Не удалось начать OAuth TikTok";
+    if (mode === "json") {
+      return NextResponse.json({ error: msg }, { status: 500 });
+    }
     return accountsErrorRedirect(base, msg);
   }
 }
 
 export async function GET() {
-  return startOAuthFlow(null);
+  return startOAuthFlow(null, "redirect");
 }
 
 export async function POST(req: Request) {
@@ -81,10 +95,10 @@ export async function POST(req: Request) {
   const key = body.clientKey?.trim() ?? "";
   const secret = body.clientSecret?.trim() ?? "";
   if (key && secret) {
-    return startOAuthFlow({ clientKey: key, clientSecret: secret });
+    return startOAuthFlow({ clientKey: key, clientSecret: secret }, "json");
   }
   if (!key && !secret) {
-    return startOAuthFlow(null);
+    return startOAuthFlow(null, "json");
   }
   return NextResponse.json(
     {

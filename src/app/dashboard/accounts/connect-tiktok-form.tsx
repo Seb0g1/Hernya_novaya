@@ -27,21 +27,20 @@ export function ConnectTikTokForm() {
           useEnv ? {} : { clientKey: k, clientSecret: s },
         ),
         credentials: "same-origin",
-        redirect: "manual",
       });
-      if (res.status >= 300 && res.status < 400) {
-        const loc = res.headers.get("Location");
-        if (loc) {
-          window.location.href = loc;
-          return;
-        }
-      }
-      if (res.headers.get("content-type")?.includes("application/json")) {
-        const j = (await res.json()) as { error?: string };
-        setError(j.error ?? `Ошибка ${res.status}`);
+      const j = (await res.json().catch(() => ({}))) as {
+        url?: string;
+        error?: string;
+      };
+      if (res.ok && j.url) {
+        window.location.href = j.url;
         return;
       }
-      setError(`Неожиданный ответ ${res.status}`);
+      if (j.error) {
+        setError(j.error);
+        return;
+      }
+      setError(`Ошибка ${res.status || "сеть"}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Сеть");
     } finally {
